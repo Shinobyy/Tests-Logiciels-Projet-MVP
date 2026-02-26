@@ -60,6 +60,8 @@ mvn spring-boot:run
 L'API sera disponible sur:
 
 - `http://localhost:8080/api`
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
 Flyway applique automatiquement:
 
@@ -113,5 +115,6 @@ Exemples d'emails:
 ## Notes
 
 - Les routes protegees utilisent `Authorization: Bearer <jwt>`.
+- Swagger UI supporte `Authorize` avec JWT Bearer.
 - Les transitions d'echange (`negotiating`, `accepted`, `refused`) sont pilotees par `MessageService` / `NegotiationService`.
 - En cas de `accepted`, les livres references sont marques `exchanged=true`.
