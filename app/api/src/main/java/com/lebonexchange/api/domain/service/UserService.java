@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.util.List;
 
 @Service
 public class UserService {
@@ -25,5 +26,12 @@ public class UserService {
         return userRepository.findById(userId)
                 .map(userEntityBoMapper::toBo)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserBo> getByIds(List<UUID> userIds) {
+        return userRepository.findAllById(userIds.stream().distinct().toList()).stream()
+                .map(userEntityBoMapper::toBo)
+                .toList();
     }
 }
