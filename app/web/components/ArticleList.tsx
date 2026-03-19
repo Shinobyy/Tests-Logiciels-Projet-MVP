@@ -1,10 +1,14 @@
 import { Article } from '@/types/base'
+import Link from 'next/link'
 
 function ArticleList({ articles }: { readonly articles: Article[]}) {
     return (
         <div>
             {articles.map((article) => (
                 <div key={article.id}>
+                    <p>
+                        <Link href={`/articles/${article.id}`}>Voir le détail</Link>
+                    </p>
                     {article.categories.map((category) => (
                         <span key={category}>{category}</span>
                     ))}
