@@ -1,36 +1,265 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nom du projet : Leboncoin-like
 
-## Getting Started
+Echanges de Articles.
 
-First, run the development server:
+Fonctionnalités:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Authentification (users seed dans la db, **register/login**)
+- Ajouter un Article à échanger
+- Afficher les Articles disponibles
+- Proposer un échange
+- Accepter, refuser une proposition d'échange ou négocier (messagerie)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Afficher les échanges en cours
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Données:
 
-## Learn More
+User:
+    - id: uuid
+    - email: string
+    - pseudonym: string
+    - avatar: string (url)
+    - rating: number (moyenne des évaluations reçues >0 et <5)
+    - password: string (hashé)
 
-To learn more about Next.js, take a look at the following resources:
+Article:
+    - id: uuid
+    - titre: string
+    - description: string
+    - published_at: Date
+    - user_id: uuid
+    - image: string (url)
+    - exchanged: boolean
+    - exchanged_at: Date (date de l'échange)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+LienCategorie:
+    - id: uuid
+    - article_id: uuid
+    - categorie_id: uuid
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Categorie:
+    - id: uuid
+    - nom: string
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+----------------------------------------------------------------------------------------------------------------
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+Exchange:
+    - id: uuid
+    - proposer_id: uuid           # celui qui initie
+    - accepter_id: uuid           # celui qui reçoit
+    - proposer_articles: uuid[]   # articles offerts par le proposant
+    - accepter_articles: uuid[]   # articles demandés à l'autre (peut changer lors négociation)
+    - status: enum (pending, accepted, refused, negotiating)
+    - updated_at: Date
+
+Message:
+    - id: uuid
+    - exchange_id: uuid
+    - user_id: uuid
+    - type: enum (message, negotiation, accepted, refused)
+    - content: string                       # commentaire texte
+    - proposed_articles: uuid[] | null      # articles offerts par l'émetteur du message
+    - requested_articles: uuid[] | null     # articles demandés à l'autre
+    - is_read: boolean
+    - created_at: Date
+
+
+
+
+
+BASE_URL = "http://localhost:3000/api"
+Endpoints:
+
+### Auth
+- POST /auth/register
+    Body: { email, pseudonym, password }
+    Response: { status: "success" }
+
+- POST /auth/login
+    Body: { email, password }
+    Response: { status: "success", token: string, user: { id, email, pseudonym, avatar } }
+
+### Users
+- GET /users/:id/articles
+    Response: {
+        articles: [
+            {
+                id: uuid,
+                titre: string,
+                description: string,
+                published_at: Date,
+                categories: [string, ...],
+                image: string
+            }
+        ]
+    }
+
+- GET /users/me/articles
+    Response: {
+        articles: [
+            {
+                id: uuid,
+                titre: string,
+                description: string,
+                published_at: Date,
+                categories: [string, ...],
+                image: string
+            }
+        ]
+    }
+
+### Categories
+- GET /categories
+    Response: {
+        categories: [
+            { id: uuid, nom: string }
+        ]
+    }
+
+### Articles
+- GET /articles (?category=uuid)
+    Response: {
+        articles: [
+            {
+                id: uuid,
+                titre: string,
+                description: string,
+                published_at: Date,
+                categories: [string, ...],
+                image: string,
+                user: { id: uuid, pseudonym: string, avatar: string }
+            }
+        ]
+    }
+
+- POST /articles
+    Body: { titre, description, categories: [uuid, ...], image }
+    Response: { status: "success", article_id: uuid }
+
+- GET /articles/:id
+    Response: {
+        article: {
+            id: uuid,
+            titre: string,
+            description: string,
+            published_at: Date,
+            categories: [string, ...],
+            image: string,
+            exchanged: boolean,
+            exchanged_at: Date | null,
+            user: { id: uuid, pseudonym: string, avatar: string }
+        }
+    }
+
+- PUT /articles/:id
+    Body: { titre?, description?, categories?: [uuid, ...], image? }
+    Response: { status: "success" }
+
+- DELETE /articles/:id
+    Response: { status: "success" }
+
+### Exchanges
+- POST /exchanges
+    Body: {
+        accepter_id: uuid,
+        proposer_articles: [uuid, ...],
+        accepter_articles: [uuid, ...],
+        message: string
+    }
+    Response: { status: "success", exchange_id: uuid }
+
+- GET /exchanges
+    Response: {
+        exchanges: [
+            {
+                id: uuid,
+                proposer: { id: uuid, pseudonym: string, avatar: string },
+                accepter: { id: uuid, pseudonym: string, avatar: string },
+                proposer_articles: [uuid, ...],
+                accepter_articles: [uuid, ...],
+                status: "pending" | "accepted" | "refused" | "negotiating",
+                updated_at: Date
+            }
+        ]
+    }
+
+- GET /exchanges/:id
+    Response: {
+        exchange: {
+            id: uuid,
+            proposer: { id: uuid, pseudonym: string, avatar: string },
+            accepter: { id: uuid, pseudonym: string, avatar: string },
+            proposer_articles: [uuid, ...],
+            accepter_articles: [uuid, ...],
+            status: "pending" | "accepted" | "refused" | "negotiating",
+            updated_at: Date
+        }
+    }
+<!-- 
+- PUT /exchanges/:id
+    Body: { status: "accepted" | "refused" | "negotiating" }
+    Response: { status: "success" } -->
+
+### Messages
+- POST /messages
+    Body: {
+        exchange_id: uuid,
+        type: "message" | "negotiation" | "accepted" | "refused",
+        content: string,
+        proposed_articles: [uuid, ...] | null,
+        requested_articles: [uuid, ...] | null
+    }
+    Response: { status: "success", message: {
+        id: uuid,
+        exchange_id: uuid,
+        user_id: uuid,
+        type: "message" | "negotiation" | "accepted" | "refused",
+        content: string,
+        proposed_articles: [uuid, ...] | null,
+        requested_articles: [uuid, ...] | null,
+        is_read: boolean,
+        created_at: Date
+    }}
+
+- GET /messages/:exchange_id
+    Response: {
+        messages: [
+            {
+                id: uuid,
+                user: { id: uuid, pseudonym: string, avatar: string },
+                type: "message" | "negotiation" | "accepted" | "refused",
+                content: string,
+                proposed_articles: [uuid, ...] | null,
+                requested_articles: [uuid, ...] | null,
+                is_read: boolean,
+                created_at: Date
+            }
+        ]
+    }
+
+- PUT /messages/:id
+    Body: { is_read: true }
+    Response: { status: "success" }
+
+### Negotiation
+- POST /negotiations
+    Body: {
+        exchange_id: uuid,
+        proposed_articles: [uuid, ...],
+        requested_articles: [uuid, ...],
+        content: string
+    }
+    Response: { status: "success", message: {
+        id: uuid,
+        exchange_id: uuid,
+        user_id: uuid,
+        type: "negotiation",
+        content: string,
+        proposed_articles: [uuid, ...],
+        requested_articles: [uuid, ...],
+        is_read: boolean,
+        created_at: Date
+    } }

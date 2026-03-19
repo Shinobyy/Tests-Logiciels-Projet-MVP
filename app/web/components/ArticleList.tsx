@@ -19,8 +19,7 @@ function ArticleList({ articles }: { readonly articles: Article[]}) {
 
                     <div>
                         <p>
-                            Proposé par
-                            {article.user?.pseudonym}
+                            Proposé par {article.user?.pseudonym}
                         </p>
                         <img src={article.user?.avatar} alt={article.user?.pseudonym} />
                     </div>
