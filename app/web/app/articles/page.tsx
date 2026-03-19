@@ -35,6 +35,7 @@ function Articles() {
       setError(null);
       setIsLoading(true);
       const response = await getArticles(selectedCategory || undefined);
+      console.log(response.articles);
       setArticles(response.articles);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load articles. Please try again later.');

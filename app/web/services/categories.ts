@@ -1,8 +1,8 @@
 import { CategoriesResponse } from "@/types/api";
-import { getCategoriesMock } from "@/services/mockDb";
-// import { apiFetch } from "@/utils/api";
+// import { getCategoriesMock } from "@/services/mockDb";
+import { apiFetch } from "@/utils/api";
 
 export function getCategories(): Promise<CategoriesResponse> {
-    // return apiFetch<CategoriesResponse>('/categories');
-    return getCategoriesMock();
+    return apiFetch<CategoriesResponse>('/categories');
+    // return getCategoriesMock();
 }
