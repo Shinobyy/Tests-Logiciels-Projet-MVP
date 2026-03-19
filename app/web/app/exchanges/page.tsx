@@ -15,7 +15,10 @@ function ExchangesPage() {
             setError(null);
             setIsLoading(true);
             const response = await getExchanges();
-            setExchanges(response.exchanges);
+            const ongoingExchanges = response.exchanges.filter(
+                (exchange) => exchange.status === "pending" || exchange.status === "negotiating",
+            );
+            setExchanges(ongoingExchanges);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Impossible de charger les échanges.");
         } finally {
