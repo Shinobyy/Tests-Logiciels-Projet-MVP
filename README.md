@@ -49,11 +49,11 @@ Verification:
 docker compose ps
 ```
 
-Services exposes:
+Services exposes par defaut:
 
-- PostgreSQL: `localhost:${POSTGRES_PORT}`
-- API: `http://localhost:${API_PORT}`
-- Swagger UI: `http://localhost:${API_PORT}/swagger-ui/index.html`
+- PostgreSQL: `localhost:5433`
+- API: `http://localhost:8080`
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 
 Pour suivre les logs:
 
@@ -81,6 +81,9 @@ L'API sera disponible sur:
 - `http://localhost:8080/api`
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
+La base Docker locale est exposee en `5433` par defaut pour eviter les conflits avec un PostgreSQL deja present sur `5432`.
+Les requetes front depuis `http://localhost:3000` sont autorisees par defaut via CORS. Pour changer cette origine, utilise `APP_CORS_ALLOWED_ORIGINS`.
 
 Flyway applique automatiquement:
 
