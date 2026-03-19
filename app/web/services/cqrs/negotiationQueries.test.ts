@@ -14,6 +14,28 @@ describe('negotiationQueries', () => {
     apiFetchMock.mockReset();
   });
 
+  it('getAllNegotiations retourne la liste complète', async () => {
+    apiFetchMock.mockResolvedValueOnce({
+      exchanges: [
+        {
+          id: 'ex-1',
+          proposer: { id: 'u-1', pseudonym: 'Alice', avatar: 'a' },
+          accepter: { id: 'u-2', pseudonym: 'Bob', avatar: 'b' },
+          proposer_articles: ['a-1'],
+          accepter_articles: ['a-2'],
+          status: 'pending',
+          updated_at: '2026-03-19T10:00:00.000Z',
+        },
+      ],
+    });
+
+    const result = await negotiationQueries.getAllNegotiations();
+
+    expect(apiFetchMock).toHaveBeenCalledWith('/exchanges');
+    expect(result).toHaveLength(1);
+    expect(result[0]?.id).toBe('ex-1');
+  });
+
   it('getNegotiationDetail lit le détail d’une négociation', async () => {
     apiFetchMock.mockResolvedValueOnce({
       exchange: {

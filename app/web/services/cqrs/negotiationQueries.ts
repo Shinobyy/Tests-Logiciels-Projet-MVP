@@ -7,6 +7,7 @@ import { apiFetch } from '@/utils/api';
 import { Exchange, Message } from '@/types/base';
 
 export interface NegotiationQueryService {
+  getAllNegotiations(): Promise<Exchange[]>;
   getNegotiationDetail(exchangeId: string): Promise<ExchangeResponse>;
   getNegotiationHistory(exchangeId: string): Promise<MessagesResponse>;
   getNegotiationsByUser(userId: string): Promise<Exchange[]>;
@@ -15,6 +16,11 @@ export interface NegotiationQueryService {
 }
 
 export const negotiationQueries: NegotiationQueryService = {
+  async getAllNegotiations() {
+    const response = await apiFetch<ExchangesResponse>('/exchanges');
+    return response.exchanges ?? [];
+  },
+
   getNegotiationDetail(exchangeId) {
     return apiFetch<ExchangeResponse>(`/exchanges/${exchangeId}`);
   },

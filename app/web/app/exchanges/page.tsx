@@ -1,6 +1,6 @@
 "use client";
 
-import { getExchanges } from "@/services/exchanges";
+import { negotiationQueries } from "@/services/cqrs/negotiationQueries";
 import { Exchange } from "@/types/base";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -14,8 +14,8 @@ function ExchangesPage() {
         try {
             setError(null);
             setIsLoading(true);
-            const response = await getExchanges();
-            const ongoingExchanges = response.exchanges.filter(
+            const allNegotiations = await negotiationQueries.getAllNegotiations();
+            const ongoingExchanges = allNegotiations.filter(
                 (exchange) => exchange.status === "pending" || exchange.status === "negotiating",
             );
             setExchanges(ongoingExchanges);
