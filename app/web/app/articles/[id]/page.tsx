@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { deleteArticle, getArticle, getMyArticles, updateArticle } from '@/services/articles';
-import { createExchange } from '@/services/exchanges';
+import { negotiationCommands } from '@/services/cqrs/negotiationCommands';
 import { type Article } from '@/types/base'
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -129,7 +129,7 @@ function ArticlePage() {
         setError(null);
 
         try {
-            const response = await createExchange({
+            const response = await negotiationCommands.proposeNegotiation({
                 accepter_id: article.user.id,
                 proposer_articles: selectedProposerArticleIds,
                 accepter_articles: [article.id],

@@ -2,9 +2,8 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { getMyArticles, getUserArticles } from "@/services/articles";
-import { getExchange } from "@/services/exchanges";
-import { createMessage, getMessages, markMessageAsRead } from "@/services/messages";
-import { createNegotiation } from "@/services/notifications";
+import { negotiationCommands } from "@/services/cqrs/negotiationCommands";
+import { negotiationQueries } from "@/services/cqrs/negotiationQueries";
 import { Article, Exchange, Message } from "@/types/base";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -45,10 +44,10 @@ function ExchangeDetailPage() {
             setError(null);
             setIsLoading(true);
 
-            const exchangeResponse = await getExchange(id);
+            const exchangeResponse = await negotiationQueries.getNegotiationDetail(id);
             setExchange(exchangeResponse.exchange);
 
-            const messagesResponse = await getMessages(id);
+            const messagesResponse = await negotiationQueries.getNegotiationHistory(id);
             const loadedMessages = messagesResponse.messages ?? [];
             setMessages(loadedMessages);
 
@@ -56,8 +55,8 @@ function ExchangeDetailPage() {
                 (message) => !message.is_read && message.user.id !== user?.id,
             );
             if (unreadForCurrentUser.length > 0) {
-                await Promise.all(unreadForCurrentUser.map((message) => markMessageAsRead(message.id)));
-                const refreshedMessages = await getMessages(id);
+                await Promise.all(unreadForCurrentUser.map((message) => negotiationCommands.markMessageAsRead(message.id)));
+                const refreshedMessages = await negotiationQueries.getNegotiationHistory(id);
                 setMessages(refreshedMessages.messages ?? []);
             }
 
@@ -126,13 +125,13 @@ function ExchangeDetailPage() {
         setError(null);
 
         try {
-            await createMessage({
-                exchange_id: exchange.id,
-                type,
-                content,
-                proposed_articles: null,
-                requested_articles: null,
-            });
+            if (type === "message") {
+                await negotiationCommands.sendComment(exchange.id, content);
+            } else if (type === "accepted") {
+                await negotiationCommands.acceptNegotiation(exchange.id);
+            } else {
+                await negotiationCommands.refuseNegotiation(exchange.id);
+            }
 
             if (type === "message") {
                 setNewMessage("");
@@ -176,7 +175,7 @@ function ExchangeDetailPage() {
         setError(null);
 
         try {
-            await createNegotiation({
+            await negotiationCommands.sendCounterProposal({
                 exchange_id: exchange.id,
                 proposed_articles: proposedArticles,
                 requested_articles: requestedArticles,
