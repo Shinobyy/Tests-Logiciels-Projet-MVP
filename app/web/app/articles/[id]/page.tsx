@@ -181,8 +181,7 @@ function ArticlePage() {
                 {error && <p className="font-bold text-[#d86f56]">{error}</p>}
 
                 {isOwner && (
-                    <>
-                        <section className="dofus-panel">
+                    <section className="dofus-panel">
                             <h2 className="mb-3 text-xl">Actions propriétaire</h2>
                             <div className="mb-3 flex flex-wrap gap-2">
                                 <button
@@ -244,12 +243,10 @@ function ArticlePage() {
                                 </form>
                             )}
                         </section>
-                    </>
                 )}
 
                 {canProposeExchange && (
-                    <>
-                        <section className="dofus-panel">
+                    <section className="dofus-panel">
                             <h2 className="mb-3 text-xl">Proposer un échange</h2>
 
                             {myArticles.length === 0 ? (
@@ -292,7 +289,6 @@ function ArticlePage() {
                                 </form>
                             )}
                         </section>
-                    </>
                 )}
             </div>
         );
