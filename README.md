@@ -35,12 +35,12 @@ Packages principaux:
 - Java 21+
 - Maven 3.9+
 
-## 1) Demarrer la base PostgreSQL (Docker)
+## 1) Demarrer tout le backend avec Docker
 
 Copier `.env.example` vers `.env` puis adapter les valeurs si besoin.
 
 ```bash
-docker compose up -d postgres
+docker compose up --build -d
 ```
 
 Verification:
@@ -49,11 +49,30 @@ Verification:
 docker compose ps
 ```
 
-## 2) Lancer l'API
+Services exposes:
+
+- PostgreSQL: `localhost:${POSTGRES_PORT}`
+- API: `http://localhost:${API_PORT}`
+- Swagger UI: `http://localhost:${API_PORT}/swagger-ui/index.html`
+
+Pour suivre les logs:
+
+```bash
+docker compose logs -f api
+```
+
+Pour tout arreter:
+
+```bash
+docker compose down
+```
+
+## 2) Lancer uniquement la base et l'API en local
 
 Depuis `app/api`:
 
 ```bash
+docker compose up -d postgres
 mvn spring-boot:run
 ```
 

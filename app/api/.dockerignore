@@ -1,0 +1,9 @@
+.git
+.gitignore
+.idea
+.vscode
+target
+.mvn
+run.out.log
+run.err.log
+*.log
