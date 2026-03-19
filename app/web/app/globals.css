@@ -2,7 +2,58 @@
 
 @layer base {
     body {
-        background-color: white;
-        color: black;
+        @apply bg-[#1f241c] text-[#d6d6c4] font-serif;
+    }
+
+    h1,
+    h2,
+    h3 {
+        @apply font-bold text-[#f4c819] drop-shadow-[0_1px_0_rgba(0,0,0,0.85)];
+    }
+
+    a {
+        @apply text-[#f5c81a] transition-colors duration-150 hover:text-[#ffe06f];
+    }
+}
+
+@layer components {
+    .dofus-page {
+        @apply min-h-screen bg-[#262b22] p-3 md:p-6;
+    }
+
+    .dofus-frame {
+        @apply mx-auto max-w-6xl rounded-sm border-2 border-[#4b4e3b] bg-[#2e3328] p-3 shadow-[inset_0_0_0_1px_rgba(140,150,110,0.2)] md:p-5;
+    }
+
+    .dofus-panel {
+        @apply rounded-sm border-2 border-[#4f5341] bg-gradient-to-b from-[#2a2f26] to-[#1f231c] p-3 shadow-inner;
+    }
+
+    .dofus-strip {
+        @apply rounded-sm border border-[#61684f] bg-[#171b14] px-3 py-2 text-[#e8e8d2] shadow-inner;
+    }
+
+    .dofus-input {
+        @apply w-full rounded-sm border-2 border-[#4f5341] bg-[#141812] px-3 py-2 text-[#e8e8d2] focus:border-[#f5b800] focus:outline-none;
+    }
+
+    .dofus-btn {
+        @apply rounded-sm border-2 border-[#70850f] bg-gradient-to-b from-[#d4f200] to-[#95b106] px-4 py-2 text-sm font-bold text-[#243000] shadow-[inset_0_1px_0_rgba(255,255,200,0.5)] transition-all duration-150 hover:from-[#e1ff2f] hover:to-[#adc80f];
+    }
+
+    .dofus-btn-muted {
+        @apply rounded-sm border-2 border-[#4f5341] bg-gradient-to-b from-[#70745e] to-[#454836] px-4 py-2 text-sm font-bold text-[#f5c81a] shadow-inner transition-colors duration-150 hover:from-[#82866f] hover:to-[#545844];
+    }
+
+    .dofus-list-item {
+        @apply rounded-sm border-2 border-[#4f5341] odd:bg-[#242921] even:bg-[#2b3128] p-3 shadow-inner;
+    }
+
+    .dofus-slot-grid {
+        @apply grid grid-cols-5 gap-1 rounded-sm border-2 border-[#4f5341] bg-[#171b15] p-2 shadow-inner;
+    }
+
+    .dofus-slot {
+        @apply h-14 rounded-sm border border-[#4d5140] bg-gradient-to-b from-[#30352d] to-[#232821] shadow-inner;
     }
 }

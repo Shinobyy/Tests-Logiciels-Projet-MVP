@@ -62,7 +62,7 @@ function Articles() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
-  const handleCreateArticle = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateArticle = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     if (!isAuthenticated) {
       setError('Tu dois être connecté pour créer un article.');
@@ -104,81 +104,180 @@ function Articles() {
     });
   };
 
+  let articlesContent: React.ReactNode;
+  if (error) {
+    articlesContent = <p className="font-bold text-[#d86f56]">{error}</p>;
+  } else if (isLoading) {
+    articlesContent = <p className="font-bold text-[#c8cbad]">Chargement...</p>;
+  } else {
+    articlesContent = <ArticleList articles={articles} />;
+  }
+
   return (
-    <div>
-    <h1>Articles</h1>
-      <p>
-        <Link href="/exchanges">Voir mes échanges</Link>
-      </p>
+    <main className="dofus-page">
+      <div className="dofus-frame space-y-5">
+        <div className="dofus-panel flex flex-wrap items-center justify-between gap-3 border-b border-[#60674e]">
+          <h1 className="text-2xl uppercase tracking-wide md:text-3xl">Catalogue de livres</h1>
+          <Link href="/exchanges" className="text-sm font-bold uppercase">
+            Voir mes négociations
+          </Link>
+        </div>
 
-    <div>
-    <label htmlFor="category-filter">Filtrer par catégorie: </label>
-    <select
-      id="category-filter"
-      value={selectedCategory}
-      onChange={(e) => setSelectedCategory(e.target.value)}
-    >
-      <option value="">Toutes</option>
-      {categories.map((category) => (
-        <option key={category.id} value={category.id}>{category.nom}</option>
-      ))}
-    </select>
-    {shouldFilterByCategory && selectedCategoryObject && (
-      <p>Filtre actif: {selectedCategoryObject.nom}</p>
-    )}
-    </div>
+        <section className="grid gap-3 lg:grid-cols-[260px_1fr]">
+          <aside className="dofus-panel p-0">
+            <div className="border-b border-[#5e664b] px-3 py-2">
+              <p className="text-sm font-bold uppercase text-[#f5c81a]">Filtres</p>
+            </div>
 
-    <button onClick={loadArticles} type="button">Rafraîchir</button>
+            <div className="space-y-3 p-3">
+              <button
+                onClick={loadArticles}
+                type="button"
+                className="dofus-btn w-full"
+              >
+                Rafraîchir
+              </button>
 
-    <hr />
+              <div>
+                <label htmlFor="category-filter" className="mb-1 block text-xs font-bold uppercase text-[#c8cbad]">
+                  Catégorie active
+                </label>
+                <select
+                  id="category-filter"
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="dofus-input"
+                >
+                  <option value="">Toutes</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>{category.nom}</option>
+                  ))}
+                </select>
+              </div>
 
-    <h2>Créer un article</h2>
-    {isAuthenticated ? (
-    <form onSubmit={handleCreateArticle}>
-      <div>
-        <label htmlFor="titre">Titre:</label>
-        <input id="titre" value={titre} onChange={(e) => setTitre(e.target.value)} required />
+              <div className="rounded-sm border-2 border-[#4f5341] bg-[#1b2018] p-2 shadow-inner">
+                <p className="mb-2 text-xs font-bold uppercase text-[#c8cbad]">Catégories</p>
+                <div className="max-h-80 space-y-1 overflow-y-auto pr-1">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategory('')}
+                    className={`flex w-full items-center gap-2 rounded-sm border px-2 py-1 text-left text-sm transition-colors ${selectedCategory === ''
+                        ? 'border-[#70850f] bg-[#2e3a1e] text-[#d7ee2d]'
+                        : 'border-[#4f5341] bg-[#232820] text-[#d6d6c4] hover:bg-[#2a3027]'
+                      }`}
+                  >
+                    <span className="h-3 w-3 rounded-sm border border-[#5f654f] bg-[#161a14]" />
+                    <span>Toutes</span>
+                  </button>
+
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => setSelectedCategory(category.id)}
+                      className={`flex w-full items-center gap-2 rounded-sm border px-2 py-1 text-left text-sm transition-colors ${selectedCategory === category.id
+                          ? 'border-[#70850f] bg-[#2e3a1e] text-[#d7ee2d]'
+                          : 'border-[#4f5341] bg-[#232820] text-[#d6d6c4] hover:bg-[#2a3027]'
+                        }`}
+                    >
+                      <span className="h-3 w-3 rounded-sm border border-[#5f654f] bg-[#161a14]" />
+                      <span>{category.nom}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {shouldFilterByCategory && selectedCategoryObject && (
+                <p className="text-xs font-bold uppercase text-[#f5c81a]">
+                  Filtre actif: {selectedCategoryObject.nom}
+                </p>
+              )}
+            </div>
+          </aside>
+
+          <div className="dofus-panel p-0">
+            <div className="grid grid-cols-[1fr_140px_130px_120px] border-b border-[#5e664b] bg-[#1d221a] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[#c8cbad]">
+              <p>Livre</p>
+              <p>Catégorie</p>
+              <p>Publié</p>
+              <p className="text-right">Action</p>
+            </div>
+
+            <div className="p-2">
+              {articlesContent}
+            </div>
+          </div>
+        </section>
+
+        <section className="dofus-panel">
+          <h2 className="mb-3 text-xl">Ajouter un livre</h2>
+          {isAuthenticated ? (
+            <form onSubmit={handleCreateArticle} className="space-y-3">
+              <div>
+                <label htmlFor="titre" className="mb-1 block text-sm font-bold text-[#f5c81a]">Titre</label>
+                <input
+                  id="titre"
+                  value={titre}
+                  onChange={(e) => setTitre(e.target.value)}
+                  required
+                  className="dofus-input"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="description" className="mb-1 block text-sm font-bold text-[#f5c81a]">Description</label>
+                <textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  required
+                  className="dofus-input min-h-24"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="image" className="mb-1 block text-sm font-bold text-[#f5c81a]">URL image</label>
+                <input
+                  id="image"
+                  value={image}
+                  onChange={(e) => setImage(e.target.value)}
+                  required
+                  className="dofus-input"
+                />
+              </div>
+
+              <fieldset className="dofus-panel">
+                <legend className="px-2 font-bold text-[#f5c81a]">Catégories</legend>
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((category) => (
+                    <label key={category.id} className="dofus-list-item inline-flex items-center gap-2 px-2 py-1 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={categoryIds.includes(category.id)}
+                        onChange={() => toggleCategoryForCreate(category.id)}
+                        className="h-4 w-4 rounded-sm border border-[#5c624d] bg-[#181c15] text-[#d0ea00] focus:ring-1 focus:ring-[#d0ea00]"
+                      />
+                      {category.nom}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="dofus-btn disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isSubmitting ? 'Création...' : 'Créer'}
+              </button>
+            </form>
+          ) : (
+            <p className="font-bold text-[#c8cbad]">Connecte-toi pour créer un article.</p>
+          )}
+        </section>
+
       </div>
-      <div>
-        <label htmlFor="description">Description:</label>
-        <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} required />
-      </div>
-      <div>
-        <label htmlFor="image">URL image:</label>
-        <input id="image" value={image} onChange={(e) => setImage(e.target.value)} required />
-      </div>
-      <fieldset>
-        <legend>Catégories</legend>
-        {categories.map((category) => (
-          <label key={category.id} style={{ marginRight: '10px' }}>
-            <input
-              type="checkbox"
-              checked={categoryIds.includes(category.id)}
-              onChange={() => toggleCategoryForCreate(category.id)}
-            />
-            {category.nom}
-          </label>
-        ))}
-      </fieldset>
-
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Création...' : 'Créer'}
-      </button>
-    </form>
-    ) : (
-    <p>Connecte-toi pour créer un article.</p>
-    )}
-
-    <hr />
-
-      {error ? (
-        <p>{error}</p>
-    ) : isLoading ? (
-    <p>Chargement...</p>
-      ) : (
-        <ArticleList articles={articles} />
-      )}
-    </div>
+    </main>
   )
 }
 

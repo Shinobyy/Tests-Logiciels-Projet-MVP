@@ -31,38 +31,58 @@ function ExchangesPage() {
     }, []);
 
     return (
-        <main>
-            <h1>Mes échanges</h1>
+        <main className="dofus-page">
+            <div className="dofus-frame space-y-4">
+                <div className="dofus-panel flex flex-wrap items-center justify-between gap-3 border-b border-[#60674e]">
+                    <h1 className="text-2xl uppercase tracking-wide md:text-3xl">Mes négociations</h1>
+                    <Link href="/articles" className="text-sm font-bold uppercase">
+                        Retour au catalogue
+                    </Link>
+                </div>
 
-            <p>
-                <Link href="/articles">Retour aux articles</Link>
-            </p>
+                <button
+                    type="button"
+                    onClick={loadExchanges}
+                    className="dofus-btn"
+                >
+                    Rafraîchir
+                </button>
 
-            <button type="button" onClick={loadExchanges}>
-                Rafraîchir
-            </button>
+                {isLoading && <p className="font-bold text-[#c8cbad]">Chargement...</p>}
+                {error && <p className="font-bold text-[#d86f56]">{error}</p>}
 
-            {isLoading && <p>Chargement...</p>}
-            {error && <p>{error}</p>}
+                {!isLoading && !error && exchanges.length === 0 && (
+                    <p className="dofus-panel text-sm font-bold text-[#c8cbad]">
+                        Aucune négociation pour le moment.
+                    </p>
+                )}
 
-            {!isLoading && !error && exchanges.length === 0 && <p>Aucun échange pour le moment.</p>}
-
-            {!isLoading && !error && exchanges.length > 0 && (
-                <ul>
-                    {exchanges.map((exchange) => (
-                        <li key={exchange.id}>
-                            <p>ID: {exchange.id}</p>
-                            <p>
-                                {exchange.proposer.pseudonym} ↔ {exchange.accepter.pseudonym}
-                            </p>
-                            <p>Statut: {exchange.status}</p>
-                            <p>Mis à jour: {new Date(exchange.updated_at).toLocaleString()}</p>
-                            <Link href={`/exchanges/${exchange.id}`}>Voir le détail</Link>
-                            <hr />
-                        </li>
-                    ))}
-                </ul>
-            )}
+                {!isLoading && !error && exchanges.length > 0 && (
+                    <ul className="space-y-2">
+                        {exchanges.map((exchange) => (
+                            <li
+                                key={exchange.id}
+                                className="dofus-list-item"
+                            >
+                                <p className="text-xs font-bold text-[#9ea37e]">ID: {exchange.id}</p>
+                                <p className="font-bold text-[#f5c81a]">
+                                    {exchange.proposer.pseudonym} ↔ {exchange.accepter.pseudonym}
+                                </p>
+                                <p className="text-sm">Statut: {exchange.status}</p>
+                                <p className="text-sm">Mis à jour: {new Date(exchange.updated_at).toLocaleString()}</p>
+                                <div className="mt-2">
+                                    <Link
+                                        href={`/exchanges/${exchange.id}`}
+                                        className="dofus-btn inline-block px-3 py-1 text-xs"
+                                    >
+                                        Voir le détail
+                                    </Link>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
         </main>
     );
 }

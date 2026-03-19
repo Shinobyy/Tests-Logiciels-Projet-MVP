@@ -13,7 +13,7 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleLogin = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -30,35 +30,39 @@ function LoginForm() {
 
   return (
     <>
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleLogin} className="space-y-2">
             <div>
-                <label htmlFor="email">Email:</label>
-                <input 
+                <label htmlFor="email" className="mb-1 block text-xs font-bold text-[#c8cbad]">Nom de compte</label>
+                <input
                     type="email"
                     id="email"
                     name="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="dofus-input py-1.5 text-sm"
                 />
             </div>
             <div>
-                <label htmlFor="password">Password:</label>
-                <input 
+                <label htmlFor="password" className="mb-1 block text-xs font-bold text-[#c8cbad]">Mot de passe</label>
+                <input
                     type="password"
                     id="password"
                     name="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    className="dofus-input py-1.5 text-sm"
                 />
             </div>
-            {error && <p style={{color: 'red'}}>{error}</p>}
-            <button type="submit" disabled={isLoading}>{isLoading ? 'Connexion...' : 'Login'}</button>
+            {error && <p className="text-xs font-bold text-[#d86f56]">{error}</p>}
+            <button type="submit" disabled={isLoading} className="dofus-btn mt-2 w-full disabled:cursor-not-allowed disabled:opacity-70">
+                {isLoading ? 'Connexion...' : 'SE CONNECTER'}
+            </button>
         </form>
 
-        <p>
-            Pas encore de compte ? <Link href="/auth/register">Créer un compte</Link>
+        <p className="mt-3 text-center text-xs text-[#c8cbad]">
+            Pas encore de compte ? <Link href="/auth/register" className="font-bold uppercase">Créer un compte</Link>
         </p>
     </>
   )

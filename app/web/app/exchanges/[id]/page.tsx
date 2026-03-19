@@ -10,6 +10,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
+const SLOT_COUNT = 10;
+const SLOT_IDS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
+
 function ExchangeDetailPage() {
     const { id }: { id: string } = useParams();
     const { user } = useAuth();
@@ -29,11 +32,6 @@ function ExchangeDetailPage() {
     const [proposedArticles, setProposedArticles] = useState<string[]>([]);
     const [requestedArticles, setRequestedArticles] = useState<string[]>([]);
 
-    const otherParticipantId = useMemo(() => {
-        if (!exchange || !user) return null;
-        return exchange.proposer.id === user.id ? exchange.accepter.id : exchange.proposer.id;
-    }, [exchange, user]);
-
     const articleNameMap = useMemo(() => {
         const entries = [...myArticles, ...otherUserArticles].map((article) => [article.id, article.titre] as const);
         return new Map(entries);
@@ -51,27 +49,48 @@ function ExchangeDetailPage() {
             setExchange(exchangeResponse.exchange);
 
             const messagesResponse = await getMessages(id);
-            setMessages(messagesResponse.messages);
+            const loadedMessages = messagesResponse.messages ?? [];
+            setMessages(loadedMessages);
 
-            const unreadForCurrentUser = messagesResponse.messages.filter(
+            const unreadForCurrentUser = loadedMessages.filter(
                 (message) => !message.is_read && message.user.id !== user?.id,
             );
             if (unreadForCurrentUser.length > 0) {
                 await Promise.all(unreadForCurrentUser.map((message) => markMessageAsRead(message.id)));
                 const refreshedMessages = await getMessages(id);
-                setMessages(refreshedMessages.messages);
+                setMessages(refreshedMessages.messages ?? []);
             }
 
             if (user) {
                 const myArticlesResponse = await getMyArticles();
-                setMyArticles(myArticlesResponse.articles);
+                const myArticlesList = myArticlesResponse.articles ?? [];
+                setMyArticles(myArticlesList);
 
-                const otherId = exchangeResponse.exchange.proposer.id === user.id
+                const isCurrentUserProposer = exchangeResponse.exchange.proposer.id === user.id;
+
+                const otherId = isCurrentUserProposer
                     ? exchangeResponse.exchange.accepter.id
                     : exchangeResponse.exchange.proposer.id;
 
                 const otherArticlesResponse = await getUserArticles(otherId);
-                setOtherUserArticles(otherArticlesResponse.articles);
+                const otherArticlesList = otherArticlesResponse.articles ?? [];
+                setOtherUserArticles(otherArticlesList);
+
+                const myArticleIds = new Set(myArticlesList.map((article) => article.id));
+                const otherArticleIds = new Set(otherArticlesList.map((article) => article.id));
+
+                const initialProposed = isCurrentUserProposer
+                    ? exchangeResponse.exchange.proposer_articles
+                    : exchangeResponse.exchange.accepter_articles;
+                const initialRequested = isCurrentUserProposer
+                    ? exchangeResponse.exchange.accepter_articles
+                    : exchangeResponse.exchange.proposer_articles;
+
+                const safeInitialProposed = initialProposed ?? [];
+                const safeInitialRequested = initialRequested ?? [];
+
+                setProposedArticles(safeInitialProposed.filter((articleId) => myArticleIds.has(articleId)));
+                setRequestedArticles(safeInitialRequested.filter((articleId) => otherArticleIds.has(articleId)));
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : "Impossible de charger l'échange.");
@@ -92,11 +111,14 @@ function ExchangeDetailPage() {
             return;
         }
 
-        const content = type === "message"
-            ? newMessage.trim()
-            : type === "accepted"
-                ? "Échange accepté"
-                : "Échange refusé";
+        let content = "";
+        if (type === "message") {
+            content = newMessage.trim();
+        } else if (type === "accepted") {
+            content = "Échange accepté";
+        } else {
+            content = "Échange refusé";
+        }
 
         if (!content) return;
 
@@ -172,165 +194,189 @@ function ExchangeDetailPage() {
         }
     };
 
+    const renderSlots = (
+        articles: Article[],
+        selectedValues: string[],
+        setSelectedValues: React.Dispatch<React.SetStateAction<string[]>>,
+    ) => {
+        return SLOT_IDS.map((slotId, index) => {
+            const article = articles[index];
+
+            if (!article) {
+                return <div key={`slot-empty-${slotId}`} className="dofus-slot" />;
+            }
+
+            const isSelected = selectedValues.includes(article.id);
+
+            return (
+                <label
+                    key={article.id}
+                    title={article.titre}
+                    className={`dofus-slot relative block cursor-pointer overflow-hidden ${isSelected ? "ring-2 ring-[#d0ea00]" : ""}`}
+                >
+                    <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleInArray(article.id, selectedValues, setSelectedValues)}
+                        disabled={isTerminalStatus}
+                        className="sr-only"
+                    />
+                    <img
+                        src={article.image}
+                        alt={article.titre}
+                        className="h-full w-full object-cover"
+                    />
+                </label>
+            );
+        });
+    };
+
     return (
-        <main>
-            <h1>Détail échange</h1>
+        <main className="dofus-page">
+            <div className="dofus-frame space-y-4">
+                <div className="dofus-panel flex flex-wrap items-center justify-between gap-3 border-b border-[#60674e]">
+                    <h1 className="text-2xl uppercase tracking-wide">Négociation de livres</h1>
+                    <Link href="/exchanges" className="text-sm font-bold uppercase">Retour aux négociations</Link>
+                </div>
 
-            <p>
-                <Link href="/exchanges">Retour aux échanges</Link>
-            </p>
+                {isLoading && <p className="font-bold text-[#c8cbad]">Chargement...</p>}
+                {error && <p className="font-bold text-[#d86f56]">{error}</p>}
 
-            {isLoading && <p>Chargement...</p>}
-            {error && <p>{error}</p>}
+                {!isLoading && !error && exchange && (
+                    <>
+                        <section className="grid gap-3 lg:grid-cols-2">
+                            <article className="dofus-panel space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl">{exchange.proposer.pseudonym}</h2>
+                                </div>
 
-            {!isLoading && !error && exchange && (
-                <>
-                    <section>
-                        <h2>Informations</h2>
-                        <p>ID: {exchange.id}</p>
-                        <p>
-                            {exchange.proposer.pseudonym} ↔ {exchange.accepter.pseudonym}
-                        </p>
-                        <p>Statut: {exchange.status}</p>
-                        <p>Mis à jour: {new Date(exchange.updated_at).toLocaleString()}</p>
-                        <p>
-                            Participant opposé: {otherParticipantId ?? "-"}
-                        </p>
-                    </section>
+                                <div className="dofus-slot-grid">
+                                    {renderSlots(myArticles, proposedArticles, setProposedArticles)}
+                                </div>
 
-                    <hr />
+                                <p className="text-xs text-[#b9bc9d]">Survole une case pour voir le nom de l&apos;article.</p>
+                            </article>
 
-                    <section>
-                        <h2>Actions rapides</h2>
-                        {isTerminalStatus && <p>Échange finalisé, aucune action de décision possible.</p>}
-                        <button
-                            type="button"
-                            onClick={() => sendStandardMessage("accepted")}
-                            disabled={isSubmittingMessage || isTerminalStatus}
-                        >
-                            Accepter
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => sendStandardMessage("refused")}
-                            disabled={isSubmittingMessage || isTerminalStatus}
-                        >
-                            Refuser
-                        </button>
-                    </section>
+                            <article className="dofus-panel space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl">{exchange.accepter.pseudonym}</h2>
+                                </div>
 
-                    <hr />
+                                <div className="dofus-slot-grid">
+                                    {renderSlots(otherUserArticles, requestedArticles, setRequestedArticles)}
+                                </div>
 
-                    <section>
-                        <h2>Messagerie</h2>
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                sendStandardMessage("message");
-                            }}
-                        >
-                            <label htmlFor="message-content">Message:</label>
-                            <textarea
-                                id="message-content"
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                required
-                            />
-                            <button type="submit" disabled={isSubmittingMessage}>
-                                {isSubmittingMessage ? "Envoi..." : "Envoyer"}
-                            </button>
-                        </form>
+                                <p className="text-xs text-[#b9bc9d]">Survole une case pour voir le nom de l&apos;article.</p>
+                            </article>
+                        </section>
 
-                        {messages.length === 0 ? (
-                            <p>Aucun message.</p>
-                        ) : (
-                            <ul>
-                                {messages.map((message) => (
-                                    <li key={message.id}>
-                                        <p>
-                                            <strong>{message.user.pseudonym}</strong> · {message.type} · {new Date(message.created_at).toLocaleString()}
-                                        </p>
-                                        <p>{message.content}</p>
-                                        {message.proposed_articles && message.proposed_articles.length > 0 && (
-                                            <p>
-                                                Proposé: {message.proposed_articles.map(articleLabel).join(", ")}
-                                            </p>
-                                        )}
-                                        {message.requested_articles && message.requested_articles.length > 0 && (
-                                            <p>
-                                                Demandé: {message.requested_articles.map(articleLabel).join(", ")}
-                                            </p>
-                                        )}
-                                        <p>{message.is_read ? "Lu" : "Non lu"}</p>
-                                        <hr />
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </section>
-
-                    <hr />
-
-                    <section>
-                        <h2>Négociation</h2>
-                        {isTerminalStatus && <p>Échange finalisé, négociation désactivée.</p>}
-                        <form onSubmit={submitNegotiation}>
-                            <div>
-                                <p>Mes articles proposés</p>
-                                {myArticles.length === 0 ? (
-                                    <p>Aucun article disponible.</p>
-                                ) : (
-                                    myArticles.map((article) => (
-                                        <label key={article.id} style={{ marginRight: "10px" }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={proposedArticles.includes(article.id)}
-                                                onChange={() => toggleInArray(article.id, proposedArticles, setProposedArticles)}
-                                                disabled={isTerminalStatus}
-                                            />
-                                            {article.titre}
-                                        </label>
-                                    ))
-                                )}
+                        <section className="dofus-panel space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-[#c8cbad]">
+                                <p>ID: {exchange.id}</p>
+                                <p>Statut: <span className="font-bold text-[#f5c81a]">{exchange.status}</span></p>
+                                <p>Mis à jour: {new Date(exchange.updated_at).toLocaleString()}</p>
                             </div>
 
-                            <div>
-                                <p>Articles demandés à l'autre utilisateur</p>
-                                {otherUserArticles.length === 0 ? (
-                                    <p>Aucun article disponible.</p>
-                                ) : (
-                                    otherUserArticles.map((article) => (
-                                        <label key={article.id} style={{ marginRight: "10px" }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={requestedArticles.includes(article.id)}
-                                                onChange={() => toggleInArray(article.id, requestedArticles, setRequestedArticles)}
-                                                disabled={isTerminalStatus}
-                                            />
-                                            {article.titre}
-                                        </label>
-                                    ))
-                                )}
-                            </div>
+                            {isTerminalStatus && (
+                                <p className="rounded-sm border border-[#7e6d3c] bg-[#2a271d] px-3 py-2 text-sm font-bold text-[#f5c81a]">
+                                    Négociation finalisée, modification désactivée.
+                                </p>
+                            )}
 
-                            <div>
-                                <label htmlFor="negotiation-content">Message de négociation:</label>
+                            <form onSubmit={submitNegotiation} className="space-y-2">
+                                <label htmlFor="negotiation-content" className="text-sm font-bold text-[#f5c81a]">
+                                    Message de négociation
+                                </label>
                                 <textarea
                                     id="negotiation-content"
                                     value={negotiationText}
                                     onChange={(e) => setNegotiationText(e.target.value)}
                                     required
                                     disabled={isTerminalStatus}
+                                    className="dofus-input min-h-20 disabled:opacity-70"
                                 />
-                            </div>
 
-                            <button type="submit" disabled={isSubmittingNegotiation || isTerminalStatus}>
-                                {isSubmittingNegotiation ? "Envoi..." : "Envoyer une négociation"}
-                            </button>
-                        </form>
-                    </section>
-                </>
-            )}
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmittingNegotiation || isTerminalStatus}
+                                        className="dofus-btn disabled:cursor-not-allowed disabled:opacity-70"
+                                    >
+                                        {isSubmittingNegotiation ? "Envoi..." : "Valider"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => sendStandardMessage("accepted")}
+                                        disabled={isSubmittingMessage || isTerminalStatus}
+                                        className="dofus-btn disabled:cursor-not-allowed disabled:opacity-70"
+                                    >
+                                        Accepter
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => sendStandardMessage("refused")}
+                                        disabled={isSubmittingMessage || isTerminalStatus}
+                                        className="dofus-btn-muted disabled:cursor-not-allowed disabled:opacity-70"
+                                    >
+                                        Annuler
+                                    </button>
+                                </div>
+                            </form>
+                        </section>
+
+                        <section className="dofus-panel space-y-2">
+                            <h2 className="text-xl">Canal de discussion</h2>
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    sendStandardMessage("message");
+                                }}
+                                className="space-y-2"
+                            >
+                                <textarea
+                                    id="message-content"
+                                    value={newMessage}
+                                    onChange={(e) => setNewMessage(e.target.value)}
+                                    required
+                                    className="dofus-input min-h-20"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={isSubmittingMessage}
+                                    className="dofus-btn disabled:cursor-not-allowed disabled:opacity-70"
+                                >
+                                    {isSubmittingMessage ? "Envoi..." : "Envoyer"}
+                                </button>
+                            </form>
+
+                            {messages.length === 0 ? (
+                                <p className="text-sm text-[#b9bc9d]">Aucun message.</p>
+                            ) : (
+                                <ul className="space-y-1">
+                                    {messages.map((message) => (
+                                        <li key={message.id} className="dofus-list-item">
+                                            <p className="text-sm font-bold text-[#f5c81a]">
+                                                {message.user.pseudonym} · {message.type} · {new Date(message.created_at).toLocaleString()}
+                                            </p>
+                                            <p className="text-sm">{message.content}</p>
+                                            {message.proposed_articles && message.proposed_articles.length > 0 && (
+                                                <p className="text-xs text-[#c8cbad]">
+                                                    Proposé: {message.proposed_articles.map(articleLabel).join(", ")}
+                                                </p>
+                                            )}
+                                            {message.requested_articles && message.requested_articles.length > 0 && (
+                                                <p className="text-xs text-[#c8cbad]">
+                                                    Demandé: {message.requested_articles.map(articleLabel).join(", ")}
+                                                </p>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </section>
+                    </>
+                )}
+            </div>
         </main>
     );
 }
