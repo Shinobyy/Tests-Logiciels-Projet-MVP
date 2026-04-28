@@ -86,6 +86,15 @@ public class MessageService {
     }
 
     @Transactional(readOnly = true)
+    public List<MessageBo> listNegotiationsByExchange(UUID exchangeId, UUID userId) {
+        exchangeService.ensureParticipant(exchangeId, userId);
+        return messageRepository.findByExchange_IdAndTypeOrderByCreatedAtAsc(exchangeId, MessageType.NEGOTIATION)
+                .stream()
+                .map(messageEntityBoMapper::toBo)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public Page<MessageBo> listByExchange(UUID exchangeId, UUID userId, Pageable pageable) {
         exchangeService.ensureParticipant(exchangeId, userId);
         return messageRepository.findByExchange_IdOrderByCreatedAtAsc(exchangeId, pageable)
