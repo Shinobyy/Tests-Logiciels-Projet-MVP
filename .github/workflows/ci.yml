@@ -39,3 +39,28 @@ jobs:
 
       - name: Test Unit with Coverage
         run: npm run test:unit:coverage
+
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: "maven"
+
+      - name: Test with Coverage
+        run: mvn verify
+
+      - name: Upload JaCoCo report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: app/api/target/site/jacoco/
