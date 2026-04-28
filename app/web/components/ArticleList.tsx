@@ -1,4 +1,5 @@
 import { Article } from '@/types/base'
+import Image from 'next/image'
 import Link from 'next/link'
 
 function ArticleList({ articles }: { readonly articles: Article[]}) {
@@ -11,7 +12,13 @@ function ArticleList({ articles }: { readonly articles: Article[]}) {
                 >
                     <div className="flex min-w-0 items-center gap-2">
                         <div className="h-8 w-8 shrink-0 rounded-sm border border-[#5c624d] bg-[#181c15] p-0.5 shadow-inner">
-                            <img src={article.image} alt={article.titre} className="h-full w-full rounded-sm object-cover" />
+                            <Image
+                                src={article.image}
+                                alt={article.titre}
+                                width={32}
+                                height={32}
+                                className="h-full w-full rounded-sm object-cover"
+                            />
                         </div>
                         <div className="min-w-0">
                             <h2 className="truncate text-sm font-bold text-[#d7ee2d]">{article.titre}</h2>

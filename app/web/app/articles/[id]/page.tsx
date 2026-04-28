@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { deleteArticle, getArticle, getMyArticles, updateArticle } from '@/services/articles';
 import { negotiationCommands } from '@/services/cqrs/negotiationCommands';
 import { type Article } from '@/types/base'
+import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
@@ -165,7 +166,13 @@ function ArticlePage() {
 
                     <div className="grid gap-4 md:grid-cols-[220px_1fr]">
                         <div className="rounded-sm border-2 border-[#4f5341] bg-[#181c15] p-1 shadow-inner">
-                            <img src={article.image} alt={article.titre} className="h-48 w-full rounded-sm object-cover" />
+                            <Image
+                                src={article.image}
+                                alt={article.titre}
+                                width={220}
+                                height={192}
+                                className="h-48 w-full rounded-sm object-cover"
+                            />
                         </div>
 
                         <div className="space-y-2">
