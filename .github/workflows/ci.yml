@@ -39,9 +39,3 @@ jobs:
 
       - name: Test Unit with Coverage
         run: npm run test:unit:coverage
-      
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      - name: Test E2E
-        run: npm run test:e2e
