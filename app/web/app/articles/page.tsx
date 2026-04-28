@@ -6,6 +6,7 @@ import { createArticle, getArticles } from '@/services/articles';
 import { getCategories } from '@/services/categories';
 import { Article, Category } from '@/types/base'
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react'
 
 function Articles() {
@@ -16,7 +17,7 @@ function Articles() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
 
   const [titre, setTitre] = useState('');
   const [description, setDescription] = useState('');
@@ -118,6 +119,17 @@ function Articles() {
       <div className="dofus-frame space-y-5">
         <div className="dofus-panel flex flex-wrap items-center justify-between gap-3 border-b border-[#60674e]">
           <h1 className="text-2xl uppercase tracking-wide md:text-3xl">Catalogue de livres</h1>
+          {isAuthenticated && (
+            <button className='dofus-btn'
+              onClick={() => {
+                logout()
+                redirect('/auth/login');
+                }
+              }
+            >
+              Se déconnecter
+            </button>
+          )}
           <Link href="/exchanges" className="text-sm font-bold uppercase">
             Voir mes négociations
           </Link>

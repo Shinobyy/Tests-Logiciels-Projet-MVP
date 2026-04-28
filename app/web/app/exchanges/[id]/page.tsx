@@ -5,11 +5,11 @@ import { getMyArticles, getUserArticles } from "@/services/articles";
 import { negotiationCommands } from "@/services/cqrs/negotiationCommands";
 import { negotiationQueries } from "@/services/cqrs/negotiationQueries";
 import { Article, Exchange, Message } from "@/types/base";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-const SLOT_COUNT = 10;
 const SLOT_IDS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
 
 function ExchangeDetailPage() {
@@ -220,10 +220,12 @@ function ExchangeDetailPage() {
                         disabled={isTerminalStatus}
                         className="sr-only"
                     />
-                    <img
+                    <Image
                         src={article.image}
                         alt={article.titre}
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="(max-width: 1024px) 20vw, 160px"
+                        className="object-cover"
                     />
                 </label>
             );
